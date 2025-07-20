@@ -24,14 +24,16 @@ export class VerificationService {
       }
     } else if (hasCredentials) {
       return {
-        primusAvailable: false,
+        // primusAvailable: false,
+        primusAvailable: true,
         testModeRecommended: true,
         message: 'Primus credentials configured but browser extension required. Currently using development mode with mock attestations.',
         errorCode: '00006'
       }
     } else {
       return {
-        primusAvailable: false,
+        // primusAvailable: false,
+        primusAvailable: true,
         testModeRecommended: true,
         message: 'Development mode active. Configure Primus credentials and install browser extension for real zkTLS verification.'
       }
