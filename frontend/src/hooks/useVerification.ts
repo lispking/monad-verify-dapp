@@ -3,9 +3,10 @@ import { useWriteContract, useWaitForTransactionReceipt, useChainId, useAccount,
 import { parseEther, parseAbiItem } from 'viem'
 import toast from 'react-hot-toast'
 
-import type { DataType, VerificationStatus, UseVerificationReturn, VerificationFormData, Attestation } from '../types/index'
-import { createMockAttestation } from '../types/index'
+import type { DataType, VerificationStatus, UseVerificationReturn, VerificationFormData } from '../types/index'
+import type { Attestation } from '../types/primus'
 import { toContractAttestation } from '../types/contract'
+import { verificationService } from '../services/verificationService'
 import { MONAD_VERIFY_ABI, getMonadVerifyAddress } from '../config/contracts'
 import { monadTestnet } from '../config/wagmi'
 import { useForceNetwork } from './useForceNetwork'
@@ -31,10 +32,13 @@ export function useVerification(): UseVerificationReturn {
     hash,
   })
 
-  // Generate mock attestation data for testing
-  const generateMockAttestationData = useCallback((dataType: DataType, userAddress: string): Attestation => {
-    // In a real implementation, this would come from Primus SDK
-    return createMockAttestation(userAddress, `verified_${dataType}_data`, dataType)
+  // Generate attestation data using verification service
+  const generateAttestationData = useCallback(async (dataType: DataType, userAddress: string): Promise<{
+    attestation: Attestation
+    isReal: boolean
+    source: 'primus' | 'mock'
+  }> => {
+    return await verificationService.generateAttestation(dataType, userAddress)
   }, [])
 
   const requestVerification = useCallback(async (data: VerificationFormData) => {
@@ -65,9 +69,22 @@ export function useVerification(): UseVerificationReturn {
         currentStep: 'Generating attestation data...',
       }))
 
-      // Generate mock attestation data
-      const attestationData = generateMockAttestationData(data.dataType, address)
-      
+      // Generate attestation data (real Primus or mock)
+      const { attestation: attestationData, isReal, source } = await generateAttestationData(data.dataType, address)
+
+      console.log(`📋 Generated ${source} attestation:`, { isReal, dataType: data.dataType })
+
+      // Validate attestation
+      const validation = await verificationService.validateAttestation(attestationData)
+      if (!validation.isValid) {
+        throw new Error(`Invalid attestation: ${validation.errors.join(', ')}`)
+      }
+
+      // Show warnings if any
+      if (validation.warnings.length > 0) {
+        console.warn('⚠️ Attestation warnings:', validation.warnings)
+      }
+
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       setState(prev => ({
@@ -116,7 +133,7 @@ export function useVerification(): UseVerificationReturn {
       }))
       throw error
     }
-  }, [address, chainId, writeContract, generateMockAttestationData])
+  }, [address, chainId, writeContract, generateAttestationData])
 
   const completeVerification = useCallback(async (requestId: `0x${string}`) => {
     if (!address) {

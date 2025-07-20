@@ -12,6 +12,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract MockPrimusVerifier is IPrimusZKTLS, Ownable {
     // State variables for testing
     mapping(bytes32 => bool) private forcedResults;
+    mapping(bytes32 => bool) private hasForcedResult; // Track which hashes have forced results
     bool private defaultResult = true;
     uint256 private totalVerifications;
 
@@ -35,10 +36,12 @@ contract MockPrimusVerifier is IPrimusZKTLS, Ownable {
 
         // Check if result is forced for testing
         bool shouldRevert = false;
-        if (forcedResults[attestationHash] == false) {
-            shouldRevert = true;
-        } else if (!defaultResult) {
-            shouldRevert = true;
+        if (hasForcedResult[attestationHash]) {
+            // Use the forced result
+            shouldRevert = !forcedResults[attestationHash];
+        } else {
+            // Use the default result
+            shouldRevert = !defaultResult;
         }
 
         if (shouldRevert) {
@@ -65,6 +68,7 @@ contract MockPrimusVerifier is IPrimusZKTLS, Ownable {
      */
     function setForcedResult(bytes32 attestationHash, bool result) external onlyOwner {
         forcedResults[attestationHash] = result;
+        hasForcedResult[attestationHash] = true;
     }
 
     /**
@@ -97,7 +101,7 @@ contract MockPrimusVerifier is IPrimusZKTLS, Ownable {
         bytes32 attestationHash = keccak256(abi.encode(attestation));
 
         // Check forced results first
-        if (forcedResults[attestationHash] != false) {
+        if (hasForcedResult[attestationHash]) {
             return forcedResults[attestationHash];
         }
 

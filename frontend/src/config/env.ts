@@ -8,7 +8,7 @@ export const env = {
 
   // Contract Addresses
   PRIMUS_CONTRACT_TESTNET: import.meta.env.VITE_PRIMUS_CONTRACT_TESTNET || '0x1Ad7fD53206fDc3979C672C0466A1c48AF47B431',
-  MONAD_VERIFY_CONTRACT_TESTNET: import.meta.env.VITE_MONAD_VERIFY_CONTRACT_TESTNET || '0xE6AeA6c3bB2de7e5223722B65220CfdFf9Dea7a7',
+  MONAD_VERIFY_CONTRACT_TESTNET: import.meta.env.VITE_MONAD_VERIFY_CONTRACT_TESTNET || '0xF41A613480988BCeCc956588EfD46Ca80Cb8b31f',
   PRIMUS_CONTRACT_MAINNET: import.meta.env.VITE_PRIMUS_CONTRACT_MAINNET || '',
   MONAD_VERIFY_CONTRACT_MAINNET: import.meta.env.VITE_MONAD_VERIFY_CONTRACT_MAINNET || '',
 
@@ -21,6 +21,10 @@ export const env = {
 
   // Mock API
   MOCK_API_URL: import.meta.env.VITE_MOCK_API_URL || '',
+
+  // Primus Configuration
+  PRIMUS_APP_ID: import.meta.env.VITE_PRIMUS_APP_ID || '',
+  PRIMUS_APP_SECRET: import.meta.env.VITE_PRIMUS_APP_SECRET || '',
 } as const
 
 // Helper functions

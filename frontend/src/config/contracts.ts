@@ -34,7 +34,7 @@ export const CONTRACT_ADDRESSES = {
   },
   // Monad Testnet
   10143: {
-    monadVerify: import.meta.env.VITE_MONAD_VERIFY_CONTRACT_TESTNET || '0xE6AeA6c3bB2de7e5223722B65220CfdFf9Dea7a7',
+    monadVerify: import.meta.env.VITE_MONAD_VERIFY_CONTRACT_TESTNET || '0xF41A613480988BCeCc956588EfD46Ca80Cb8b31f',
     primusVerifier: import.meta.env.VITE_PRIMUS_CONTRACT_TESTNET || '0x1Ad7fD53206fDc3979C672C0466A1c48AF47B431',
   },
   // Monad Mainnet
