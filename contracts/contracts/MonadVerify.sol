@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./interfaces/IPrimusVerifier.sol";
+import { IPrimusZKTLS, Attestation } from "@primuslabs/zktls-contracts/src/IPrimusZKTLS.sol";
 import "./libraries/DataTypes.sol";
 
 /**
@@ -43,7 +43,7 @@ contract MonadVerify is Ownable, ReentrancyGuard, Pausable {
     );
 
     // State variables
-    IPrimusVerifier public primusContract;
+    IPrimusZKTLS public primusContract;
     
     mapping(address => DataTypes.UserProfile) public userProfiles;
     mapping(bytes32 => DataTypes.VerificationRequest) public verificationRequests;
@@ -72,7 +72,7 @@ contract MonadVerify is Ownable, ReentrancyGuard, Pausable {
             "Invalid verification fee"
         );
         
-        primusContract = IPrimusVerifier(_primusContract);
+        primusContract = IPrimusZKTLS(_primusContract);
         verificationFee = _verificationFee;
         
         // Initialize supported data types
@@ -86,17 +86,18 @@ contract MonadVerify is Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev Request data verification
      * @param dataType Type of data to verify
-     * @param attestationData Attestation data from Primus zkTLS
+     * @param attestation Attestation data from Primus zkTLS
      * @return requestId Unique identifier for the verification request
      */
     function requestVerification(
         string calldata dataType,
-        bytes calldata attestationData
+        Attestation calldata attestation
     ) external payable nonReentrant whenNotPaused returns (bytes32 requestId) {
         require(msg.value >= verificationFee, "Insufficient verification fee");
         require(supportedDataTypes[dataType], "Unsupported data type");
-        require(attestationData.length > 0, "Empty attestation data");
-        
+        require(attestation.recipient != address(0), "Invalid attestation recipient");
+        require(bytes(attestation.data).length > 0, "Empty attestation data");
+
         requestId = keccak256(
             abi.encodePacked(
                 msg.sender,
@@ -105,17 +106,17 @@ contract MonadVerify is Ownable, ReentrancyGuard, Pausable {
                 block.number
             )
         );
-        
+
         require(
             verificationRequests[requestId].user == address(0),
             "Request ID already exists"
         );
-        
+
         // Create verification request
         verificationRequests[requestId] = DataTypes.VerificationRequest({
             user: msg.sender,
             dataType: dataType,
-            attestationData: attestationData,
+            attestation: attestation,
             timestamp: block.timestamp,
             isVerified: false,
             isCompleted: false
@@ -138,29 +139,27 @@ contract MonadVerify is Ownable, ReentrancyGuard, Pausable {
         require(!request.isCompleted, "Verification already completed");
         
         // Verify attestation with Primus contract
-        bool isValid = primusContract.verifyAttestation(request.attestationData);
+        primusContract.verifyAttestation(request.attestation);
         
-        request.isVerified = isValid;
+        request.isVerified = true;
         request.isCompleted = true;
         
-        if (isValid) {
-            // Update user profile
-            DataTypes.UserProfile storage profile = userProfiles[msg.sender];
-            profile.verificationCount++;
-            profile.lastVerificationTime = block.timestamp;
-            profile.isVerified = true;
-            
-            // Update global stats
-            totalVerifications++;
-            
-            emit UserProfileUpdated(
-                msg.sender,
-                profile.verificationCount,
-                block.timestamp
-            );
-        }
+        // Update user profile
+        DataTypes.UserProfile storage profile = userProfiles[msg.sender];
+        profile.verificationCount++;
+        profile.lastVerificationTime = block.timestamp;
+        profile.isVerified = true;
         
-        emit VerificationCompleted(msg.sender, requestId, isValid, block.timestamp);
+        // Update global stats
+        totalVerifications++;
+        
+        emit UserProfileUpdated(
+            msg.sender,
+            profile.verificationCount,
+            block.timestamp
+        );
+        
+        emit VerificationCompleted(msg.sender, requestId, true, block.timestamp);
     }
 
     /**
@@ -206,7 +205,7 @@ contract MonadVerify is Ownable, ReentrancyGuard, Pausable {
         require(_newPrimusContract != address(0), "Invalid contract address");
         
         address oldContract = address(primusContract);
-        primusContract = IPrimusVerifier(_newPrimusContract);
+        primusContract = IPrimusZKTLS(_newPrimusContract);
         
         emit PrimusContractUpdated(oldContract, _newPrimusContract);
     }

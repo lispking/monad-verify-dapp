@@ -213,3 +213,12 @@ export type Prettify<T> = {
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
 
 export type RequiredBy<T, K extends keyof T> = T & Required<Pick<T, K>>
+
+// Export Primus zkTLS types
+export type {
+  Attestation,
+  AttNetworkRequest,
+  AttNetworkResponseResolve,
+  Attestor
+} from './primus'
+export { createMockAttestation, validateAttestation } from './primus'

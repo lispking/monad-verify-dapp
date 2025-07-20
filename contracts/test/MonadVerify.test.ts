@@ -1,15 +1,47 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Contract, Signer } from "ethers";
+import { Signer } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { MonadVerify, MockPrimusVerifier } from "../typechain-types";
 
 describe("MonadVerify", function () {
-  // Helper function for creating verification requests
-  async function createVerificationRequest(monadVerify: Contract, user: Signer, verificationFee: bigint) {
-    const dataType = "identity";
-    const attestationData = ethers.toUtf8Bytes("mock_attestation_data");
+  // Helper function to create mock attestation
+  function createMockAttestation(recipient: string, dataType: string = "identity") {
+    return {
+      recipient: recipient,
+      request: {
+        url: "https://api.example.com/verify",
+        header: '{"Content-Type": "application/json"}',
+        method: "POST",
+        body: `{"type": "${dataType}", "data": "mock_data"}`,
+      },
+      reponseResolve: [
+        {
+          keyName: "verified",
+          parseType: "JSON",
+          parsePath: "$.verified",
+        },
+      ],
+      data: `verified_${dataType}_data`,
+      attConditions: `{"dataType": "${dataType}"}`,
+      timestamp: Math.floor(Date.now() / 1000),
+      additionParams: "",
+      attestors: [
+        {
+          attestorAddr: "0x1234567890123456789012345678901234567890",
+          url: "https://attestor.example.com",
+        },
+      ],
+      signatures: ["0x" + "0".repeat(130)], // Mock signature
+    };
+  }
 
-    const tx = await monadVerify.connect(user).requestVerification(dataType, attestationData, {
+  // Helper function for creating verification requests
+  async function createVerificationRequest(monadVerify: MonadVerify, user: Signer, verificationFee: bigint) {
+    const dataType = "identity";
+    const attestation = createMockAttestation(await user.getAddress(), dataType);
+
+    const tx = await monadVerify.connect(user).requestVerification(dataType, attestation, {
       value: verificationFee,
     });
 
@@ -32,21 +64,21 @@ describe("MonadVerify", function () {
   // Fixtures
   async function deployMonadVerifyFixture() {
     const [owner, user1, user2] = await ethers.getSigners();
-    
+
     // Deploy MockPrimusVerifier
     const MockPrimusVerifier = await ethers.getContractFactory("MockPrimusVerifier");
-    const primusVerifier = await MockPrimusVerifier.deploy();
+    const primusVerifier = await MockPrimusVerifier.deploy() as unknown as MockPrimusVerifier;
     await primusVerifier.waitForDeployment();
-    
+
     // Deploy MonadVerify
     const verificationFee = ethers.parseEther("0.01");
     const MonadVerify = await ethers.getContractFactory("MonadVerify");
     const monadVerify = await MonadVerify.deploy(
       await primusVerifier.getAddress(),
       verificationFee
-    );
+    ) as unknown as MonadVerify;
     await monadVerify.waitForDeployment();
-    
+
     return {
       monadVerify,
       primusVerifier,
@@ -103,12 +135,12 @@ describe("MonadVerify", function () {
       const { monadVerify, user1, verificationFee } = await loadFixture(
         deployMonadVerifyFixture
       );
-      
+
       const dataType = "identity";
-      const attestationData = ethers.toUtf8Bytes("mock_attestation_data");
-      
+      const attestation = createMockAttestation(await user1.getAddress(), dataType);
+
       await expect(
-        monadVerify.connect(user1).requestVerification(dataType, attestationData, {
+        monadVerify.connect(user1).requestVerification(dataType, attestation, {
           value: verificationFee,
         })
       ).to.emit(monadVerify, "VerificationRequested");
@@ -116,12 +148,12 @@ describe("MonadVerify", function () {
 
     it("Should revert with insufficient fee", async function () {
       const { monadVerify, user1 } = await loadFixture(deployMonadVerifyFixture);
-      
+
       const dataType = "identity";
-      const attestationData = ethers.toUtf8Bytes("mock_attestation_data");
-      
+      const attestation = createMockAttestation(await user1.getAddress(), dataType);
+
       await expect(
-        monadVerify.connect(user1).requestVerification(dataType, attestationData, {
+        monadVerify.connect(user1).requestVerification(dataType, attestation, {
           value: ethers.parseEther("0.005"), // Less than required fee
         })
       ).to.be.revertedWith("Insufficient verification fee");
@@ -131,12 +163,12 @@ describe("MonadVerify", function () {
       const { monadVerify, user1, verificationFee } = await loadFixture(
         deployMonadVerifyFixture
       );
-      
+
       const dataType = "unsupported_type";
-      const attestationData = ethers.toUtf8Bytes("mock_attestation_data");
-      
+      const attestation = createMockAttestation(await user1.getAddress(), dataType);
+
       await expect(
-        monadVerify.connect(user1).requestVerification(dataType, attestationData, {
+        monadVerify.connect(user1).requestVerification(dataType, attestation, {
           value: verificationFee,
         })
       ).to.be.revertedWith("Unsupported data type");
@@ -146,12 +178,14 @@ describe("MonadVerify", function () {
       const { monadVerify, user1, verificationFee } = await loadFixture(
         deployMonadVerifyFixture
       );
-      
+
       const dataType = "identity";
-      const attestationData = "0x";
-      
+      // Create attestation with empty data
+      const invalidAttestation = createMockAttestation(await user1.getAddress(), dataType);
+      invalidAttestation.data = ""; // Make data empty
+
       await expect(
-        monadVerify.connect(user1).requestVerification(dataType, attestationData, {
+        monadVerify.connect(user1).requestVerification(dataType, invalidAttestation, {
           value: verificationFee,
         })
       ).to.be.revertedWith("Empty attestation data");
@@ -167,8 +201,9 @@ describe("MonadVerify", function () {
 
       // Force verification to succeed
       const dataType = "identity";
-      const attestationData = ethers.toUtf8Bytes("mock_attestation_data");
-      await primusVerifier.forceVerificationResult(attestationData, true);
+      const attestation = createMockAttestation(await user1.getAddress(), dataType);
+      const attestationHash = await primusVerifier.getAttestationHash(attestation);
+      await primusVerifier.setForcedResult(attestationHash, true);
 
       const requestId = await createVerificationRequest(monadVerify, user1, verificationFee);
 
@@ -195,15 +230,21 @@ describe("MonadVerify", function () {
     });
 
     it("Should revert when trying to complete already completed verification", async function () {
-      const { monadVerify, user1, verificationFee } = await loadFixture(
+      const { monadVerify, user1, verificationFee, primusVerifier } = await loadFixture(
         deployMonadVerifyFixture
       );
-      
+
+      // Force verification to succeed
+      const dataType = "identity";
+      const attestation = createMockAttestation(await user1.getAddress(), dataType);
+      const attestationHash = await primusVerifier.getAttestationHash(attestation);
+      await primusVerifier.setForcedResult(attestationHash, true);
+
       const requestId = await createVerificationRequest(monadVerify, user1, verificationFee);
-      
+
       // Complete verification first time
       await monadVerify.connect(user1).completeVerification(requestId);
-      
+
       // Try to complete again
       await expect(
         monadVerify.connect(user1).completeVerification(requestId)
@@ -250,20 +291,20 @@ describe("MonadVerify", function () {
       
       // Try to create verification request while paused
       const dataType = "identity";
-      const attestationData = ethers.toUtf8Bytes("mock_attestation_data");
-      
+      const attestation = createMockAttestation(await user1.getAddress(), dataType);
+
       await expect(
-        monadVerify.connect(user1).requestVerification(dataType, attestationData, {
+        monadVerify.connect(user1).requestVerification(dataType, attestation, {
           value: verificationFee,
         })
       ).to.be.revertedWithCustomError(monadVerify, "EnforcedPause");
-      
+
       // Unpause contract
       await monadVerify.connect(owner).unpause();
-      
+
       // Should work after unpause
       await expect(
-        monadVerify.connect(user1).requestVerification(dataType, attestationData, {
+        monadVerify.connect(user1).requestVerification(dataType, attestation, {
           value: verificationFee,
         })
       ).to.emit(monadVerify, "VerificationRequested");
@@ -281,8 +322,9 @@ describe("MonadVerify", function () {
 
       // Force verification to succeed
       const dataType = "identity";
-      const attestationData = ethers.toUtf8Bytes("mock_attestation_data");
-      await primusVerifier.forceVerificationResult(attestationData, true);
+      const attestation = createMockAttestation(await user1.getAddress(), dataType);
+      const attestationHash = await primusVerifier.getAttestationHash(attestation);
+      await primusVerifier.setForcedResult(attestationHash, true);
 
       // Create and complete verification
       const requestId = await createVerificationRequest(monadVerify, user1, verificationFee);

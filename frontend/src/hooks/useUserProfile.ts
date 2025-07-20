@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useReadContract, useChainId } from 'wagmi'
 import type { Address } from 'viem'
 import type { UserProfile, UserStats, UseUserProfileReturn, DataType } from '../types/index'
-import { getMonadVerifyContract } from '../config/contracts'
+import { MONAD_VERIFY_ABI, getMonadVerifyAddress } from '../config/contracts'
+import { monadTestnet } from '../config/wagmi'
 
 export function useUserProfile(address?: Address): UseUserProfileReturn {
   const chainId = useChainId()
@@ -14,11 +15,12 @@ export function useUserProfile(address?: Address): UseUserProfileReturn {
     error: profileError,
     refetch: refetchProfile
   } = useReadContract({
-    ...getMonadVerifyContract(chainId),
+    address: chainId === monadTestnet.id ? getMonadVerifyAddress(chainId) : undefined,
+    abi: MONAD_VERIFY_ABI,
     functionName: 'getUserProfile',
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address,
+      enabled: !!address && chainId === monadTestnet.id,
     },
   })
 

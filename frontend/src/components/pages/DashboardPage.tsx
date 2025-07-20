@@ -14,6 +14,7 @@ import { useUserProfile } from '../../hooks/useUserProfile'
 import LoadingSpinner from '../LoadingSpinner'
 import StatsCard from '../StatsCard'
 import RecentVerifications from '../RecentVerifications'
+import { NetworkGuard } from '../NetworkGuard'
 
 export default function DashboardPage() {
   const { address } = useAccount()
@@ -73,7 +74,8 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <NetworkGuard>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -179,6 +181,7 @@ export default function DashboardPage() {
           </motion.div>
         </div>
       </motion.div>
-    </div>
+      </div>
+    </NetworkGuard>
   )
 }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import { Attestation } from "@primuslabs/zktls-contracts/src/IPrimusZKTLS.sol";
+
 /**
  * @title DataTypes
  * @dev Library containing data structures used throughout the MonadVerify protocol
@@ -21,7 +23,7 @@ library DataTypes {
     struct VerificationRequest {
         address user;                   // User requesting verification
         string dataType;               // Type of data being verified
-        bytes attestationData;         // Primus zkTLS attestation data
+        Attestation attestation;       // Primus zkTLS attestation data
         uint256 timestamp;             // Request timestamp
         bool isVerified;               // Whether verification was successful
         bool isCompleted;              // Whether verification process is completed
@@ -104,13 +106,13 @@ library DataTypes {
      * @dev Create a new verification request
      * @param user Address of the user
      * @param dataType Type of data to verify
-     * @param attestationData Primus attestation data
+     * @param attestation Primus attestation data
      * @return requestId Unique identifier for the request
      */
     function createVerificationRequest(
         address user,
         string memory dataType,
-        bytes memory attestationData
+        Attestation memory attestation
     ) internal returns (bytes32 requestId) {
         requestId = keccak256(
             abi.encodePacked(
@@ -129,18 +131,19 @@ library DataTypes {
      * @dev Validate verification request parameters
      * @param user User address
      * @param dataType Data type
-     * @param attestationData Attestation data
+     * @param attestation Attestation data
      * @return isValid Whether parameters are valid
      */
     function validateVerificationRequest(
         address user,
         string memory dataType,
-        bytes memory attestationData
+        Attestation memory attestation
     ) internal pure returns (bool isValid) {
         return (
             user != address(0) &&
             bytes(dataType).length > 0 &&
-            attestationData.length > 0
+            attestation.recipient != address(0) &&
+            bytes(attestation.data).length > 0
         );
     }
 

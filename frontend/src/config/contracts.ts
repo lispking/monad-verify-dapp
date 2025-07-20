@@ -1,182 +1,29 @@
 import { Address } from 'viem'
-import { getContractAddress } from './env'
+import { MONAD_VERIFY_ABI } from '../contracts/MonadVerifyABI'
 
-// MonadVerify Contract ABI (simplified for key functions)
-export const MONAD_VERIFY_ABI = [
-  // Read functions
-  {
-    inputs: [{ name: 'user', type: 'address' }],
-    name: 'getUserProfile',
-    outputs: [
-      {
-        components: [
-          { name: 'verificationCount', type: 'uint256' },
-          { name: 'lastVerificationTime', type: 'uint256' },
-          { name: 'isVerified', type: 'bool' },
-        ],
-        name: 'profile',
-        type: 'tuple',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [{ name: 'requestId', type: 'bytes32' }],
-    name: 'getVerificationRequest',
-    outputs: [
-      {
-        components: [
-          { name: 'user', type: 'address' },
-          { name: 'dataType', type: 'string' },
-          { name: 'attestationData', type: 'bytes' },
-          { name: 'timestamp', type: 'uint256' },
-          { name: 'isVerified', type: 'bool' },
-          { name: 'isCompleted', type: 'bool' },
-        ],
-        name: 'request',
-        type: 'tuple',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [{ name: 'user', type: 'address' }],
-    name: 'isUserVerified',
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [{ name: 'dataType', type: 'string' }],
-    name: 'supportedDataTypes',
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'verificationFee',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'totalVerifications',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getContractStats',
-    outputs: [
-      { name: 'totalUsers', type: 'uint256' },
-      { name: 'totalVerifications', type: 'uint256' },
-      { name: 'contractBalance', type: 'uint256' },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
+// Export the ABI for external use
+export { MONAD_VERIFY_ABI }
 
-  // Write functions
-  {
-    inputs: [
-      { name: 'dataType', type: 'string' },
-      { name: 'attestationData', type: 'bytes' },
-    ],
-    name: 'requestVerification',
-    outputs: [{ name: 'requestId', type: 'bytes32' }],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [{ name: 'requestId', type: 'bytes32' }],
-    name: 'completeVerification',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-
-  // Events
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, name: 'user', type: 'address' },
-      { indexed: true, name: 'requestId', type: 'bytes32' },
-      { indexed: false, name: 'dataType', type: 'string' },
-      { indexed: false, name: 'timestamp', type: 'uint256' },
-    ],
-    name: 'VerificationRequested',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, name: 'user', type: 'address' },
-      { indexed: true, name: 'requestId', type: 'bytes32' },
-      { indexed: false, name: 'success', type: 'bool' },
-      { indexed: false, name: 'timestamp', type: 'uint256' },
-    ],
-    name: 'VerificationCompleted',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, name: 'user', type: 'address' },
-      { indexed: false, name: 'verificationCount', type: 'uint256' },
-      { indexed: false, name: 'timestamp', type: 'uint256' },
-    ],
-    name: 'UserProfileUpdated',
-    type: 'event',
-  },
-] as const
-
-// Mock Primus Verifier ABI (simplified)
+// Primus Verifier Contract ABI (simplified)
 export const PRIMUS_VERIFIER_ABI = [
   {
     inputs: [{ name: 'attestationData', type: 'bytes' }],
     name: 'verifyAttestation',
     outputs: [{ name: 'isValid', type: 'bool' }],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getTotalVerifications',
-    outputs: [{ name: 'count', type: 'uint256' }],
     stateMutability: 'view',
     type: 'function',
   },
+  {
+    inputs: [
+      { name: 'dataType', type: 'string' },
+      { name: 'data', type: 'bytes' },
+    ],
+    name: 'generateAttestation',
+    outputs: [{ name: 'attestation', type: 'bytes' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 ] as const
-
-// Contract configuration
-export function getMonadVerifyContract(chainId: number) {
-  const address = getContractAddress('monadVerify', chainId)
-  if (!address) {
-    throw new Error(`MonadVerify contract not deployed on chain ${chainId}`)
-  }
-  
-  return {
-    address: address as Address,
-    abi: MONAD_VERIFY_ABI,
-  }
-}
-
-export function getPrimusVerifierContract(chainId: number) {
-  const address = getContractAddress('primus', chainId)
-  if (!address) {
-    throw new Error(`Primus contract not found on chain ${chainId}`)
-  }
-  
-  return {
-    address: address as Address,
-    abi: PRIMUS_VERIFIER_ABI,
-  }
-}
 
 // Contract addresses for different networks
 export const CONTRACT_ADDRESSES = {
@@ -187,7 +34,7 @@ export const CONTRACT_ADDRESSES = {
   },
   // Monad Testnet
   10143: {
-    monadVerify: import.meta.env.VITE_MONAD_VERIFY_CONTRACT_TESTNET || '0x989541a89357B2a9bA48e2C889B11F0150715119',
+    monadVerify: import.meta.env.VITE_MONAD_VERIFY_CONTRACT_TESTNET || '0xE6AeA6c3bB2de7e5223722B65220CfdFf9Dea7a7',
     primusVerifier: import.meta.env.VITE_PRIMUS_CONTRACT_TESTNET || '0x1Ad7fD53206fDc3979C672C0466A1c48AF47B431',
   },
   // Monad Mainnet
@@ -196,3 +43,36 @@ export const CONTRACT_ADDRESSES = {
     primusVerifier: import.meta.env.VITE_PRIMUS_CONTRACT_MAINNET || '',
   },
 } as const
+
+// Helper function to get contract address for current network
+export function getMonadVerifyAddress(chainId: number): Address {
+  const addresses = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES]
+  if (!addresses?.monadVerify) {
+    throw new Error(`MonadVerify contract not deployed on chain ${chainId}`)
+  }
+  return addresses.monadVerify as Address
+}
+
+export function getPrimusVerifierAddress(chainId: number): Address {
+  const addresses = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES]
+  if (!addresses?.primusVerifier) {
+    throw new Error(`PrimusVerifier contract not deployed on chain ${chainId}`)
+  }
+  return addresses.primusVerifier as Address
+}
+
+// Contract configuration
+export const CONTRACT_CONFIG = {
+  monadVerify: {
+    abi: MONAD_VERIFY_ABI,
+    getAddress: getMonadVerifyAddress,
+  },
+  primusVerifier: {
+    abi: PRIMUS_VERIFIER_ABI,
+    getAddress: getPrimusVerifierAddress,
+  },
+} as const
+
+// Export types
+export type ContractName = keyof typeof CONTRACT_CONFIG
+export type ChainId = keyof typeof CONTRACT_ADDRESSES

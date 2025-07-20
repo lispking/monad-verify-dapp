@@ -31,7 +31,8 @@ async function main() {
   // Deploy or use existing Primus contract
   if (PRIMUS_CONTRACT_ADDRESS && PRIMUS_CONTRACT_ADDRESS !== "") {
     console.log("🔗 Using existing Primus contract at:", PRIMUS_CONTRACT_ADDRESS);
-    primusContract = await ethers.getContractAt("IPrimusVerifier", PRIMUS_CONTRACT_ADDRESS);
+    // For existing Primus contracts, we'll use the MockPrimusVerifier interface for compatibility
+    primusContract = await ethers.getContractAt("MockPrimusVerifier", PRIMUS_CONTRACT_ADDRESS);
   } else {
     console.log("🏗️  Deploying MockPrimusVerifier...");
     const MockPrimusVerifier = await ethers.getContractFactory("MockPrimusVerifier");

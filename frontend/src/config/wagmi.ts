@@ -67,9 +67,9 @@ export const wagmiConfig = createConfig({
     }),
   ],
   transports: {
-    [monadTestnet.id]: http(),
-    [monadMainnet.id]: http(),
-    [hardhat.id]: http(),
+    [monadTestnet.id]: http(monadTestnet.rpcUrls.default.http[0]),
+    [monadMainnet.id]: http(monadMainnet.rpcUrls.default.http[0]),
+    [hardhat.id]: http('http://127.0.0.1:8545'),
   },
 })
 

@@ -20,6 +20,7 @@ import { useUserProfile } from '../../hooks/useUserProfile'
 
 // Components
 import LoadingSpinner from '../LoadingSpinner'
+import { NetworkGuard } from '../NetworkGuard'
 
 // Types
 import type { DataType } from '../../types/index'
@@ -142,7 +143,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <NetworkGuard>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -432,6 +434,7 @@ export default function ProfilePage() {
           </div>
         )}
       </motion.div>
-    </div>
+      </div>
+    </NetworkGuard>
   )
 }

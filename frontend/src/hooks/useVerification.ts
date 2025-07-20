@@ -1,10 +1,14 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt, useChainId, useAccount } from 'wagmi'
-import { parseEther, encodePacked, keccak256 } from 'viem'
+import { parseEther } from 'viem'
 import toast from 'react-hot-toast'
 
-import type { DataType, VerificationStatus, UseVerificationReturn, VerificationFormData } from '../types/index'
-import { getMonadVerifyContract } from '../config/contracts'
+import type { DataType, VerificationStatus, UseVerificationReturn, VerificationFormData, Attestation } from '../types/index'
+import { createMockAttestation } from '../types/index'
+import { toContractAttestation } from '../types/contract'
+import { MONAD_VERIFY_ABI, getMonadVerifyAddress } from '../config/contracts'
+import { monadTestnet } from '../config/wagmi'
+import { useForceNetwork } from './useForceNetwork'
 
 export function useVerification(): UseVerificationReturn {
   const { address } = useAccount()
@@ -18,28 +22,16 @@ export function useVerification(): UseVerificationReturn {
   })
 
   const { writeContract, data: hash, isPending, error: writeError } = useWriteContract()
+  const { ensureCorrectNetwork } = useForceNetwork()
   
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   })
 
   // Generate mock attestation data for testing
-  const generateMockAttestationData = useCallback((dataType: DataType, userAddress: string): `0x${string}` => {
+  const generateMockAttestationData = useCallback((dataType: DataType, userAddress: string): Attestation => {
     // In a real implementation, this would come from Primus SDK
-    const mockData = {
-      dataType,
-      userAddress,
-      timestamp: Math.floor(Date.now() / 1000),
-      platform: 'mock_platform',
-      verified: true,
-    }
-    
-    const encoded = encodePacked(
-      ['string', 'address', 'uint256', 'string', 'bool'],
-      [mockData.dataType, userAddress as `0x${string}`, BigInt(mockData.timestamp), mockData.platform, mockData.verified]
-    )
-    
-    return keccak256(encoded)
+    return createMockAttestation(userAddress, `verified_${dataType}_data`, dataType)
   }, [])
 
   const requestVerification = useCallback(async (data: VerificationFormData) => {
@@ -48,6 +40,9 @@ export function useVerification(): UseVerificationReturn {
     }
 
     try {
+      // Force network switch before any transaction
+      console.log('🔄 Ensuring correct network before verification request...')
+      await ensureCorrectNetwork()
       setState(prev => ({
         ...prev,
         status: 'requesting',
@@ -80,11 +75,25 @@ export function useVerification(): UseVerificationReturn {
       const verificationFee = parseEther('0.01') // Mock fee
 
       // Submit verification request to contract
+      const contractAttestation = toContractAttestation(attestationData)
+
+      // Force use Monad Testnet address regardless of current chainId
+      const monadVerifyAddress = getMonadVerifyAddress(monadTestnet.id)
+
+      console.log('🔗 Submitting verification request:', {
+        chainId: chainId,
+        requiredChainId: monadTestnet.id,
+        contractAddress: monadVerifyAddress,
+        dataType: data.dataType
+      })
+
       writeContract({
-        ...getMonadVerifyContract(chainId),
+        address: monadVerifyAddress,
+        abi: MONAD_VERIFY_ABI,
         functionName: 'requestVerification',
-        args: [data.dataType, attestationData],
+        args: [data.dataType, contractAttestation] as any,
         value: verificationFee,
+        chainId: monadTestnet.id, // Explicitly specify chain ID
       })
 
       setState(prev => ({
@@ -110,6 +119,9 @@ export function useVerification(): UseVerificationReturn {
     }
 
     try {
+      // Force network switch before any transaction
+      console.log('🔄 Ensuring correct network before verification completion...')
+      await ensureCorrectNetwork()
       setState(prev => ({
         ...prev,
         status: 'verifying',
@@ -119,10 +131,21 @@ export function useVerification(): UseVerificationReturn {
       }))
 
       // Submit completion to contract
+      const monadVerifyAddress = getMonadVerifyAddress(monadTestnet.id)
+
+      console.log('🔗 Completing verification:', {
+        chainId: chainId,
+        requiredChainId: monadTestnet.id,
+        contractAddress: monadVerifyAddress,
+        requestId
+      })
+
       writeContract({
-        ...getMonadVerifyContract(chainId),
+        address: monadVerifyAddress,
+        abi: MONAD_VERIFY_ABI,
         functionName: 'completeVerification',
         args: [requestId],
+        chainId: monadTestnet.id, // Explicitly specify chain ID
       })
 
       setState(prev => ({

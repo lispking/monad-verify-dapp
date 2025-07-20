@@ -3,6 +3,7 @@ import { useAccount } from 'wagmi'
 
 // Components
 import Layout from './components/Layout'
+import { NetworkEnforcer } from './components/NetworkEnforcer'
 
 // Hooks
 import { useNetworkSwitch } from './hooks/useNetworkSwitch'
@@ -20,8 +21,9 @@ function App() {
   useNetworkSwitch()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <Layout>
+    <NetworkEnforcer>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <Layout>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
@@ -44,8 +46,9 @@ function App() {
           {/* 404 Route */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </Layout>
-    </div>
+        </Layout>
+      </div>
+    </NetworkEnforcer>
   )
 }
 
