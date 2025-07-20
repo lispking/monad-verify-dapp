@@ -5,6 +5,40 @@ import type { DataType } from '../types/index'
 
 export class VerificationService {
   /**
+   * Get environment status for Primus integration
+   */
+  public getEnvironmentStatus(): {
+    primusAvailable: boolean
+    testModeRecommended: boolean
+    message: string
+    errorCode?: string
+  } {
+    const hasCredentials = !!(primusService as any).PRIMUS_CONFIG?.appId && !!(primusService as any).PRIMUS_CONFIG?.appSecret
+    const isPrimusAvailable = primusService.isAvailable()
+
+    if (isPrimusAvailable) {
+      return {
+        primusAvailable: true,
+        testModeRecommended: false,
+        message: 'Primus zkTLS is ready for real verification. All attestations will be genuine zkTLS proofs.'
+      }
+    } else if (hasCredentials) {
+      return {
+        primusAvailable: false,
+        testModeRecommended: true,
+        message: 'Primus credentials configured but browser extension required. Currently using development mode with mock attestations.',
+        errorCode: '00006'
+      }
+    } else {
+      return {
+        primusAvailable: false,
+        testModeRecommended: true,
+        message: 'Development mode active. Configure Primus credentials and install browser extension for real zkTLS verification.'
+      }
+    }
+  }
+
+  /**
    * Generate attestation data - tries real Primus first, falls back to mock
    */
   public async generateAttestation(
@@ -15,6 +49,8 @@ export class VerificationService {
     attestation: Attestation
     isReal: boolean
     source: 'primus' | 'mock'
+    error?: string
+    instructions?: string
   }> {
     console.log('🔄 Generating attestation for:', { dataType, userAddress })
 
@@ -23,7 +59,7 @@ export class VerificationService {
       try {
         console.log('🚀 Attempting to use real Primus zkTLS SDK...')
         const attestation = await primusService.generateAttestation(dataType, userAddress, userData)
-        
+
         // Verify the attestation is valid
         const isValid = await primusService.verifyAttestation(attestation)
         if (isValid) {
@@ -37,20 +73,45 @@ export class VerificationService {
           console.warn('⚠️ Real Primus attestation failed validation, falling back to mock')
         }
       } catch (error) {
-        console.warn('⚠️ Real Primus SDK failed, falling back to mock:', error)
+        console.warn('⚠️ Real Primus SDK failed:', error)
+
+        // Provide specific error guidance based on error code
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        let instructions = ''
+
+        if (errorMessage.includes('00006') || errorMessage.includes('extension')) {
+          instructions = 'Primus browser extension (v0.3.15+) is required but not detected. Please contact Primus team for extension access.'
+        } else if (errorMessage.includes('credentials') || errorMessage.includes('1002001') || errorMessage.includes('1002002')) {
+          instructions = 'Invalid Primus credentials. Please check your App ID and App Secret configuration.'
+        } else {
+          instructions = 'Primus zkTLS initialization failed. Using development mode with mock attestations.'
+        }
+
+        // Still fall back to mock for development
+        console.log('🎭 Falling back to mock attestation for development...')
+        const mockAttestation = createMockAttestation(userAddress, `verified_${dataType}_data`, dataType)
+
+        return {
+          attestation: mockAttestation,
+          isReal: false,
+          source: 'mock',
+          error: errorMessage,
+          instructions
+        }
       }
     } else {
-      console.log('ℹ️ Primus SDK not available, using mock data')
+      console.log('ℹ️ Primus SDK not available, using mock data for development')
     }
 
     // Fallback to mock attestation
-    console.log('🎭 Generating mock attestation...')
+    console.log('🎭 Generating mock attestation for development...')
     const mockAttestation = createMockAttestation(userAddress, `verified_${dataType}_data`, dataType)
-    
+
     return {
       attestation: mockAttestation,
       isReal: false,
-      source: 'mock'
+      source: 'mock',
+      instructions: 'Development mode: Using mock attestations. For real zkTLS verification, Primus browser extension and valid credentials are required.'
     }
   }
 
@@ -149,30 +210,7 @@ export class VerificationService {
     }
   }
 
-  /**
-   * Check if the current environment supports real Primus verification
-   */
-  public getEnvironmentStatus(): {
-    primusAvailable: boolean
-    testModeRecommended: boolean
-    message: string
-  } {
-    const primusAvailable = primusService.isAvailable()
-    
-    if (primusAvailable) {
-      return {
-        primusAvailable: true,
-        testModeRecommended: false,
-        message: 'Primus zkTLS SDK is available and ready for real verification.'
-      }
-    }
 
-    return {
-      primusAvailable: false,
-      testModeRecommended: true,
-      message: 'Primus zkTLS SDK is not available. Using mock data for testing. To use real verification, configure Primus credentials and ensure the SDK is properly initialized.'
-    }
-  }
 }
 
 // Export singleton instance

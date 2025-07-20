@@ -31,22 +31,102 @@ export class PrimusService {
 
   private async initialize() {
     try {
+      // Check if we have Primus credentials
+      console.log('🔍 Checking Primus credentials...', {
+        hasAppId: !!PRIMUS_CONFIG.appId,
+        hasAppSecret: !!PRIMUS_CONFIG.appSecret,
+        appId: PRIMUS_CONFIG.appId?.substring(0, 10) + '...',
+      })
+
+      if (!PRIMUS_CONFIG.appId || !PRIMUS_CONFIG.appSecret) {
+        console.warn('⚠️ Primus credentials not configured. Real zkTLS verification unavailable.')
+        this.isInitialized = false
+        return
+      }
+
+      console.log('✅ Primus credentials found, initializing SDK...')
+
       // Initialize Primus zkTLS SDK
       this.zkTLS = new PrimusZKTLS()
 
+      // Check if Primus browser extension is available
+      console.log('🔍 Checking for Primus browser extension...')
+      const hasExtension = await this.checkPrimusExtension()
+      console.log('🔍 Extension check result:', hasExtension)
+
+      if (!hasExtension) {
+        console.warn('⚠️ Primus browser extension not detected.')
+        console.warn('💡 For testing purposes, we\'ll try to initialize the SDK anyway...')
+        // Don't return here - let's try to initialize the SDK anyway for testing
+      }
+
+      if (hasExtension) {
+        console.log('✅ Primus extension detected, initializing with credentials...')
+      } else {
+        console.log('⚠️ No extension detected, but trying to initialize SDK anyway...')
+      }
+
       // Initialize with app credentials
+      console.log('🔄 Calling zkTLS.init with:', {
+        appId: PRIMUS_CONFIG.appId?.substring(0, 10) + '...',
+        hasSecret: !!PRIMUS_CONFIG.appSecret,
+        platform: 'pc'
+      })
+
       const result = await this.zkTLS.init(
         PRIMUS_CONFIG.appId,
         PRIMUS_CONFIG.appSecret,
-        { platform: 'pc' } // or 'android', 'ios'
+        { platform: 'pc', env: 'production' }
       )
 
+      console.log('🔍 zkTLS.init result:', result)
       this.isInitialized = !!result
-      console.log('✅ Primus zkTLS SDK initialized successfully:', result)
+
+      if (this.isInitialized) {
+        console.log('✅ Primus zkTLS SDK initialized successfully!')
+      } else {
+        console.log('❌ Primus zkTLS SDK initialization failed')
+      }
     } catch (error) {
       console.error('❌ Failed to initialize Primus zkTLS SDK:', error)
       this.isInitialized = false
     }
+  }
+
+  /**
+   * Check if Primus browser extension is available
+   */
+  private async checkPrimusExtension(): Promise<boolean> {
+    return new Promise((resolve) => {
+      console.log('🔍 Sending message to check Primus extension...')
+
+      // Check if window.postMessage can communicate with Primus extension
+      const timeout = setTimeout(() => {
+        console.log('⏰ Extension check timeout - no response from Primus extension')
+        resolve(false)
+      }, 2000) // Increase timeout to 2 seconds
+
+      const messageHandler = (event: MessageEvent) => {
+        console.log('📨 Received message:', event.data)
+        if (event.data?.target === 'padoZKAttestationJSSDK' && event.data?.name === 'extensionCheck') {
+          console.log('✅ Primus extension responded!')
+          clearTimeout(timeout)
+          window.removeEventListener('message', messageHandler)
+          resolve(true)
+        }
+      }
+
+      window.addEventListener('message', messageHandler)
+
+      // Send test message to extension
+      const testMessage = {
+        target: 'padoExtension',
+        origin: 'padoZKAttestationJSSDK',
+        name: 'checkExtension'
+      }
+      console.log('📤 Sending test message to extension:', testMessage)
+      window.postMessage(testMessage, '*')
+    })
   }
 
   /**
@@ -57,7 +137,7 @@ export class PrimusService {
   }
 
   /**
-   * Generate a real attestation using Primus zkTLS SDK
+   * Generate a real attestation using Primus zkTLS SDK (following official documentation)
    */
   public async generateAttestation(
     dataType: string,
@@ -65,30 +145,46 @@ export class PrimusService {
     _userData?: any // Prefix with underscore to indicate intentionally unused
   ): Promise<Attestation> {
     if (!this.isAvailable()) {
-      throw new Error('Primus zkTLS SDK is not available. Using fallback mock data.')
+      throw new Error('Primus zkTLS SDK is not available. Please install Primus browser extension and configure credentials.')
     }
 
     try {
       const templateId = TEMPLATE_IDS[dataType as keyof typeof TEMPLATE_IDS]
       if (!templateId) {
-        throw new Error(`Unsupported data type: ${dataType}`)
+        throw new Error(`Unsupported data type: ${dataType}. Available types: ${Object.keys(TEMPLATE_IDS).join(', ')}`)
       }
 
-      // Prepare attestation parameters
-      const attestationParams = {
-        templateId,
-        userAddress,
-        conditions: this.getConditionsForDataType(dataType),
-        mode: 'proxytls' as const, // or 'mpctls'
+      console.log('🔄 Generating Primus attestation...', { dataType, userAddress, templateId })
+
+      // Step 1: Generate request parameters using Primus SDK
+      const request = this.zkTLS!.generateRequestParams(templateId, userAddress)
+
+      // Step 2: Set zkTLS mode (optional, default is proxy model)
+      const workMode = 'proxytls'
+      request.setAttMode({
+        algorithmType: workMode,
+      })
+
+      // Step 3: Set attestation conditions (optional)
+      const conditions = this.getConditionsForDataType(dataType)
+      if (conditions && conditions.length > 0) {
+        request.setAttConditions(conditions)
       }
 
-      console.log('🔄 Generating Primus attestation...', attestationParams)
+      // Step 4: Transfer request object to string
+      const requestStr = request.toJsonString()
+      console.log('📋 Request string:', requestStr)
 
-      // Call Primus SDK to generate attestation
-      const attestationParamsStr = JSON.stringify(attestationParams)
-      const attestation = await this.zkTLS!.startAttestation(attestationParamsStr)
+      // Step 5: Sign request
+      console.log('🔐 Signing request...')
+      const signedRequestStr = await this.zkTLS!.sign(requestStr)
+      console.log('✅ Request signed successfully')
 
-      console.log('✅ Primus attestation generated successfully')
+      // Step 6: Start attestation process
+      console.log('🚀 Starting attestation process...')
+      const attestation = await this.zkTLS!.startAttestation(signedRequestStr)
+      console.log('✅ Primus attestation generated successfully:', attestation)
+
       return attestation as Attestation
 
     } catch (error) {
@@ -155,37 +251,28 @@ export class PrimusService {
     }
 
     try {
-      // In a real implementation, you might want to verify the attestation
-      // against Primus servers before submitting to blockchain
-      console.log('🔍 Verifying attestation with Primus...')
-      
-      // For now, we'll just validate the structure
-      const isValid = this.validateAttestationStructure(attestation)
-      
-      console.log('✅ Attestation verification result:', isValid)
-      return isValid
+      console.log('🔍 Verifying attestation signature with Primus SDK...')
+
+      // Verify signature using Primus SDK (following official documentation)
+      const verifyResult = await this.zkTLS!.verifyAttestation(attestation)
+      console.log('🔍 Primus verification result:', verifyResult)
+
+      if (verifyResult === true) {
+        console.log('✅ Attestation signature verified successfully')
+        // Here you can add business logic checks, such as attestation content and timestamp checks
+        return true
+      } else {
+        console.warn('⚠️ Attestation signature verification failed')
+        return false
+      }
 
     } catch (error) {
-      console.error('❌ Failed to verify attestation:', error)
+      console.error('❌ Failed to verify Primus attestation:', error)
       return false
     }
   }
 
-  /**
-   * Validate attestation structure
-   */
-  private validateAttestationStructure(attestation: Attestation): boolean {
-    return !!(
-      attestation.recipient &&
-      attestation.data &&
-      attestation.timestamp &&
-      attestation.attestors &&
-      attestation.attestors.length > 0 &&
-      attestation.signatures &&
-      attestation.signatures.length > 0 &&
-      attestation.signatures[0] !== ('0x' + '0'.repeat(130)) // Not a mock signature
-    )
-  }
+
 }
 
 // Export singleton instance

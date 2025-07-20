@@ -37,6 +37,8 @@ export function useVerification(): UseVerificationReturn {
     attestation: Attestation
     isReal: boolean
     source: 'primus' | 'mock'
+    error?: string
+    instructions?: string
   }> => {
     return await verificationService.generateAttestation(dataType, userAddress)
   }, [])
@@ -70,9 +72,22 @@ export function useVerification(): UseVerificationReturn {
       }))
 
       // Generate attestation data (real Primus or mock)
-      const { attestation: attestationData, isReal, source } = await generateAttestationData(data.dataType, address)
+      const result = await generateAttestationData(data.dataType, address)
+      const { attestation: attestationData, isReal, source, error, instructions } = result
 
       console.log(`📋 Generated ${source} attestation:`, { isReal, dataType: data.dataType })
+
+      // Show user guidance if using mock data or if there's an error
+      if (!isReal) {
+        if (error) {
+          console.warn(`⚠️ Primus SDK Error: ${error}`)
+          if (instructions) {
+            console.info(`💡 Instructions: ${instructions}`)
+          }
+        } else if (instructions) {
+          console.info(`ℹ️ ${instructions}`)
+        }
+      }
 
       // Validate attestation
       const validation = await verificationService.validateAttestation(attestationData)
@@ -83,6 +98,9 @@ export function useVerification(): UseVerificationReturn {
       // Show warnings if any
       if (validation.warnings.length > 0) {
         console.warn('⚠️ Attestation warnings:', validation.warnings)
+        if (!isReal) {
+          console.warn('⚠️ Using mock attestation - this may fail on-chain verification with real Primus contract')
+        }
       }
 
       await new Promise(resolve => setTimeout(resolve, 1000))

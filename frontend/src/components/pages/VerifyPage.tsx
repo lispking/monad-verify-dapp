@@ -17,6 +17,7 @@ import toast from 'react-hot-toast'
 // Components
 import LoadingSpinner from '../LoadingSpinner'
 import { NetworkGuard } from '../NetworkGuard'
+import PrimusStatus from '../PrimusStatus'
 
 // Hooks
 import { useVerification } from '../../hooks/useVerification'
@@ -161,6 +162,9 @@ export default function VerifyPage() {
             Verify your data securely using Primus zkTLS technology
           </p>
         </div>
+
+        {/* Primus Status */}
+        <PrimusStatus className="mb-8" />
 
         {state.status === 'idle' ? (
           /* Data Type Selection */
