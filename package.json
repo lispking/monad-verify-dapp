@@ -1,0 +1,39 @@
+{
+  "name": "monad-verify-dapp",
+  "version": "1.0.0",
+  "description": "A beautiful DApp on Monad blockchain leveraging Primus zkTLS for secure data verification",
+  "private": true,
+  "workspaces": [
+    "contracts",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build && pnpm --filter contracts compile",
+    "test": "pnpm --filter contracts test && pnpm --filter frontend test",
+    "deploy:testnet": "pnpm --filter contracts deploy:testnet",
+    "deploy:mainnet": "pnpm --filter contracts deploy:mainnet",
+    "clean": "pnpm --filter contracts clean && pnpm --filter frontend clean",
+    "lint": "pnpm --filter frontend lint && pnpm --filter contracts lint"
+  },
+  "keywords": [
+    "monad",
+    "blockchain",
+    "dapp",
+    "primus",
+    "zktls",
+    "data-verification",
+    "web3",
+    "privacy"
+  ],
+  "author": "MonadVerify Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

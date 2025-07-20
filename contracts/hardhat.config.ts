@@ -1,0 +1,78 @@
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-verify";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
+import * as dotenv from "dotenv";
+
+dotenv.config({ path: "../.env" });
+
+const config: HardhatUserConfig = {
+  solidity: {
+    version: "0.8.24",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+      viaIR: true,
+    },
+  },
+  networks: {
+    hardhat: {
+      chainId: 31337,
+    },
+    monadTestnet: {
+      url: process.env.MONAD_TESTNET_RPC || "https://testnet-rpc.monad.xyz",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 10143,
+      gasPrice: "auto",
+    },
+    monadMainnet: {
+      url: process.env.MONAD_MAINNET_RPC || "https://rpc.monad.xyz",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 143,
+      gasPrice: "auto",
+    },
+  },
+  etherscan: {
+    apiKey: {
+      monadTestnet: process.env.MONAD_ETHERSCAN_API_KEY || "",
+      monadMainnet: process.env.MONAD_ETHERSCAN_API_KEY || "",
+    },
+    customChains: [
+      {
+        network: "monadTestnet",
+        chainId: 10143,
+        urls: {
+          apiURL: "https://testnet-explorer.monad.xyz/api",
+          browserURL: "https://testnet-explorer.monad.xyz",
+        },
+      },
+      {
+        network: "monadMainnet",
+        chainId: 143,
+        urls: {
+          apiURL: "https://explorer.monad.xyz/api",
+          browserURL: "https://explorer.monad.xyz",
+        },
+      },
+    ],
+  },
+  gasReporter: {
+    enabled: process.env.REPORT_GAS !== undefined,
+    currency: "USD",
+  },
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts",
+  },
+  typechain: {
+    outDir: "typechain-types",
+    target: "ethers-v6",
+  },
+};
+
+export default config;
