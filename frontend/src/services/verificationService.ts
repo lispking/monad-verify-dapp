@@ -24,18 +24,18 @@ export class VerificationService {
       }
     } else if (hasCredentials) {
       return {
-        // primusAvailable: false,
-        primusAvailable: true,
+        primusAvailable: false,
+        // primusAvailable: true,
         testModeRecommended: true,
-        message: 'Primus credentials configured but browser extension required. Currently using development mode with mock attestations.',
+        message: 'Primus credentials configured but Pado browser extension required. Currently using development mode with mock attestations.',
         errorCode: '00006'
       }
     } else {
       return {
-        // primusAvailable: false,
-        primusAvailable: true,
+        primusAvailable: false,
+        // primusAvailable: true,
         testModeRecommended: true,
-        message: 'Development mode active. Configure Primus credentials and install browser extension for real zkTLS verification.'
+        message: 'Development mode active. Configure Primus credentials and install Pado browser extension for real zkTLS verification.'
       }
     }
   }
@@ -82,7 +82,7 @@ export class VerificationService {
         let instructions = ''
 
         if (errorMessage.includes('00006') || errorMessage.includes('extension')) {
-          instructions = 'Primus browser extension (v0.3.15+) is required but not detected. Please contact Primus team for extension access.'
+          instructions = 'Pado browser extension is required but not detected. Please install it from the Chrome Web Store: https://chromewebstore.google.com/detail/pado/oeiomhmbaapihbilkfkhmlajkeegnjhe'
         } else if (errorMessage.includes('credentials') || errorMessage.includes('1002001') || errorMessage.includes('1002002')) {
           instructions = 'Invalid Primus credentials. Please check your App ID and App Secret configuration.'
         } else {
@@ -113,7 +113,7 @@ export class VerificationService {
       attestation: mockAttestation,
       isReal: false,
       source: 'mock',
-      instructions: 'Development mode: Using mock attestations. For real zkTLS verification, Primus browser extension and valid credentials are required.'
+      instructions: 'Development mode: Using mock attestations. For real zkTLS verification, Pado browser extension and valid credentials are required.'
     }
   }
 

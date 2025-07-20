@@ -13,12 +13,12 @@ const PRIMUS_CONFIG = {
 
 // Template IDs for different verification types
 const TEMPLATE_IDS = {
-  identity: 'identity-template-id',
-  income: 'income-template-id',
-  credit_score: 'credit-template-id',
-  education: 'education-template-id',
-  employment: 'employment-template-id',
-  social_media: 'social-template-id',
+  identity: '41e26070-8d57-4e97-b0b3-f9b7c7359f21',
+  income: '41e26070-8d57-4e97-b0b3-f9b7c7359f21',
+  credit_score: '41e26070-8d57-4e97-b0b3-f9b7c7359f21',
+  education: '41e26070-8d57-4e97-b0b3-f9b7c7359f21',
+  employment: '41e26070-8d57-4e97-b0b3-f9b7c7359f21',
+  social_media: '41e26070-8d57-4e97-b0b3-f9b7c7359f21',
 }
 
 export class PrimusService {
@@ -49,19 +49,19 @@ export class PrimusService {
       // Initialize Primus zkTLS SDK
       this.zkTLS = new PrimusZKTLS()
 
-      // Check if Primus browser extension is available
-      console.log('🔍 Checking for Primus browser extension...')
+      // Check if Pado browser extension is available
+      console.log('🔍 Checking for Pado browser extension...')
       const hasExtension = await this.checkPrimusExtension()
       console.log('🔍 Extension check result:', hasExtension)
 
       if (!hasExtension) {
-        console.warn('⚠️ Primus browser extension not detected.')
+        console.warn('⚠️ Pado browser extension not detected.')
         console.warn('💡 For testing purposes, we\'ll try to initialize the SDK anyway...')
         // Don't return here - let's try to initialize the SDK anyway for testing
       }
 
       if (hasExtension) {
-        console.log('✅ Primus extension detected, initializing with credentials...')
+        console.log('✅ Pado extension detected, initializing with credentials...')
       } else {
         console.log('⚠️ No extension detected, but trying to initialize SDK anyway...')
       }
@@ -94,22 +94,22 @@ export class PrimusService {
   }
 
   /**
-   * Check if Primus browser extension is available
+   * Check if Pado browser extension is available
    */
   private async checkPrimusExtension(): Promise<boolean> {
     return new Promise((resolve) => {
-      console.log('🔍 Sending message to check Primus extension...')
+      console.log('🔍 Sending message to check Pado extension...')
 
       // Check if window.postMessage can communicate with Primus extension
       const timeout = setTimeout(() => {
-        console.log('⏰ Extension check timeout - no response from Primus extension')
+        console.log('⏰ Extension check timeout - no response from Pado extension')
         resolve(false)
       }, 2000) // Increase timeout to 2 seconds
 
       const messageHandler = (event: MessageEvent) => {
         console.log('📨 Received message:', event.data)
         if (event.data?.target === 'padoZKAttestationJSSDK' && event.data?.name === 'extensionCheck') {
-          console.log('✅ Primus extension responded!')
+          console.log('✅ Pado extension responded!')
           clearTimeout(timeout)
           window.removeEventListener('message', messageHandler)
           resolve(true)
@@ -145,7 +145,7 @@ export class PrimusService {
     _userData?: any // Prefix with underscore to indicate intentionally unused
   ): Promise<Attestation> {
     if (!this.isAvailable()) {
-      throw new Error('Primus zkTLS SDK is not available. Please install Primus browser extension and configure credentials.')
+      throw new Error('Primus zkTLS SDK is not available. Please install Pado browser extension and configure credentials.')
     }
 
     try {
