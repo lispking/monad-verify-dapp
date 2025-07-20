@@ -1,68 +1,53 @@
-import { CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
-
-// Mock data for recent verifications
-const mockVerifications = [
-  {
-    id: '1',
-    dataType: 'Identity',
-    status: 'completed',
-    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    requestId: '0x1234...5678',
-  },
-  {
-    id: '2',
-    dataType: 'Income',
-    status: 'completed',
-    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-    requestId: '0x2345...6789',
-  },
-  {
-    id: '3',
-    dataType: 'Credit Score',
-    status: 'pending',
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-    requestId: '0x3456...7890',
-  },
-]
+import { CheckCircleIcon, ClockIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import { useVerificationHistory } from '../hooks/useVerificationHistory'
 
 export default function RecentVerifications() {
+  const { records } = useVerificationHistory()
+
+  // Get the 3 most recent verifications
+  const recentVerifications = records.slice(0, 3)
   return (
     <div className="card">
       <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
         Recent Verifications
       </h3>
       
-      {mockVerifications.length > 0 ? (
+      {recentVerifications.length > 0 ? (
         <div className="space-y-4">
-          {mockVerifications.map((verification) => (
+          {recentVerifications.map((verification) => (
             <div
               key={verification.id}
               className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700 rounded-lg"
             >
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
-                  {verification.status === 'completed' ? (
+                  {verification.status === 'verified' ? (
                     <CheckCircleIcon className="h-6 w-6 text-green-500" />
+                  ) : verification.status === 'failed' ? (
+                    <XCircleIcon className="h-6 w-6 text-red-500" />
                   ) : (
                     <ClockIcon className="h-6 w-6 text-yellow-500" />
                   )}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                    {verification.dataType}
+                    {verification.dataType.charAt(0).toUpperCase() + verification.dataType.slice(1)}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {verification.requestId}
+                    {verification.requestId || 'No ID'}
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <p className={`text-xs font-medium ${
-                  verification.status === 'completed' 
-                    ? 'text-green-600 dark:text-green-400' 
+                  verification.status === 'verified'
+                    ? 'text-green-600 dark:text-green-400'
+                    : verification.status === 'failed'
+                    ? 'text-red-600 dark:text-red-400'
                     : 'text-yellow-600 dark:text-yellow-400'
                 }`}>
-                  {verification.status === 'completed' ? 'Verified' : 'Pending'}
+                  {verification.status === 'verified' ? 'Verified' :
+                   verification.status === 'failed' ? 'Failed' : 'Pending'}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {verification.timestamp.toLocaleDateString()}

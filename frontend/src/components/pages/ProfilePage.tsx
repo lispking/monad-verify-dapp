@@ -17,46 +17,19 @@ import toast from 'react-hot-toast'
 
 // Hooks
 import { useUserProfile } from '../../hooks/useUserProfile'
+import { useVerificationHistory } from '../../hooks/useVerificationHistory'
 
 // Components
 import LoadingSpinner from '../LoadingSpinner'
 import { NetworkGuard } from '../NetworkGuard'
 
-// Types
-import type { DataType } from '../../types/index'
 
-// Mock verification history
-const mockVerificationHistory = [
-  {
-    id: '1',
-    dataType: 'identity' as DataType,
-    status: 'verified',
-    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    requestId: '0x1234567890abcdef',
-    platform: 'Government ID',
-  },
-  {
-    id: '2',
-    dataType: 'income' as DataType,
-    status: 'verified',
-    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    requestId: '0x2345678901bcdefg',
-    platform: 'Bank Statement',
-  },
-  {
-    id: '3',
-    dataType: 'social_media' as DataType,
-    status: 'pending',
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
-    requestId: '0x3456789012cdefgh',
-    platform: 'Twitter',
-  },
-]
 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount()
   const { disconnect } = useDisconnect()
   const { profile, stats, isLoading, error } = useUserProfile(address)
+  const { records: verificationHistory } = useVerificationHistory()
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'settings'>('overview')
 
   const formatAddress = (addr: string) => {
@@ -81,7 +54,7 @@ export default function ProfilePage() {
       address,
       profile,
       stats,
-      verificationHistory: mockVerificationHistory,
+      verificationHistory,
       exportedAt: new Date().toISOString(),
     }
 
@@ -316,9 +289,9 @@ export default function ProfilePage() {
               Verification History
             </h3>
 
-            {mockVerificationHistory.length > 0 ? (
+            {verificationHistory.length > 0 ? (
               <div className="space-y-4">
-                {mockVerificationHistory.map((verification) => (
+                {verificationHistory.map((verification) => (
                   <div
                     key={verification.id}
                     className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700 rounded-lg"
@@ -332,7 +305,7 @@ export default function ProfilePage() {
                           {verification.dataType.replace('_', ' ')} Verification
                         </h4>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {verification.platform} • {verification.timestamp.toLocaleDateString()}
+                          MonadVerify • {verification.timestamp.toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -345,7 +318,7 @@ export default function ProfilePage() {
                         {verification.status}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                        {verification.requestId.slice(0, 10)}...
+                        {verification.requestId ? `${verification.requestId.slice(0, 10)}...` : 'No ID'}
                       </div>
                     </div>
                   </div>

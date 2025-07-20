@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useWriteContract, useWaitForTransactionReceipt, useChainId, useAccount } from 'wagmi'
-import { parseEther } from 'viem'
+import { useWriteContract, useWaitForTransactionReceipt, useChainId, useAccount, usePublicClient } from 'wagmi'
+import { parseEther, parseAbiItem } from 'viem'
 import toast from 'react-hot-toast'
 
 import type { DataType, VerificationStatus, UseVerificationReturn, VerificationFormData, Attestation } from '../types/index'
@@ -9,10 +9,12 @@ import { toContractAttestation } from '../types/contract'
 import { MONAD_VERIFY_ABI, getMonadVerifyAddress } from '../config/contracts'
 import { monadTestnet } from '../config/wagmi'
 import { useForceNetwork } from './useForceNetwork'
+import { useVerificationHistory } from './useVerificationHistory'
 
 export function useVerification(): UseVerificationReturn {
   const { address } = useAccount()
   const chainId = useChainId()
+  const publicClient = usePublicClient()
   const [state, setState] = useState({
     status: 'idle' as VerificationStatus,
     requestId: undefined as `0x${string}` | undefined,
@@ -23,6 +25,7 @@ export function useVerification(): UseVerificationReturn {
 
   const { writeContract, data: hash, isPending, error: writeError } = useWriteContract()
   const { ensureCorrectNetwork } = useForceNetwork()
+  const { refresh: refreshHistory } = useVerificationHistory()
   
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
@@ -38,6 +41,8 @@ export function useVerification(): UseVerificationReturn {
     if (!address) {
       throw new Error('Wallet not connected')
     }
+
+
 
     try {
       // Force network switch before any transaction
@@ -177,15 +182,67 @@ export function useVerification(): UseVerificationReturn {
 
   // Handle transaction confirmation
   useEffect(() => {
-    if (isConfirmed && state.status === 'requesting') {
+    if (isConfirmed && state.status === 'requesting' && hash) {
+      // After requestVerification is confirmed, automatically call completeVerification
       setState(prev => ({
         ...prev,
-        status: 'completed',
-        progress: 100,
-        currentStep: 'Verification request submitted successfully!',
+        status: 'verifying',
+        progress: 80,
+        currentStep: 'Verification request confirmed. Completing verification...',
       }))
-      toast.success('Verification request submitted!')
+
+      // Auto-complete verification after a short delay
+      setTimeout(async () => {
+        try {
+          if (!publicClient) {
+            throw new Error('Public client not available')
+          }
+
+          // Get the transaction receipt to extract the requestId from VerificationRequested event
+          const receipt = await publicClient.getTransactionReceipt({ hash })
+
+          // Find the VerificationRequested event
+          const contractAddress = getMonadVerifyAddress(monadTestnet.id)
+
+          // Get VerificationRequested events from this transaction
+          const verificationEvents = await publicClient.getLogs({
+            address: contractAddress,
+            event: parseAbiItem('event VerificationRequested(address indexed user, bytes32 indexed requestId, string dataType, uint256 timestamp)'),
+            fromBlock: receipt.blockNumber,
+            toBlock: receipt.blockNumber,
+            args: {
+              user: address
+            }
+          })
+
+          const verificationEvent = verificationEvents.find(event => event.transactionHash === hash)
+
+          if (!verificationEvent || !verificationEvent.args.requestId) {
+            throw new Error('Could not find VerificationRequested event in transaction receipt')
+          }
+
+          // Extract requestId from the event args
+          const requestId = verificationEvent.args.requestId
+
+          console.log('🔍 Extracted requestId from transaction:', requestId)
+
+          await completeVerification(requestId)
+        } catch (error: any) {
+          console.error('Auto-completion failed:', error)
+          setState(prev => ({
+            ...prev,
+            status: 'failed',
+            error: error.message || 'Failed to complete verification',
+            currentStep: 'Verification completion failed',
+          }))
+          toast.error('Failed to complete verification: ' + error.message)
+        }
+      }, 2000) // 2 second delay to allow for network propagation
+
     } else if (isConfirmed && state.status === 'verifying') {
+      // Refresh verification history to get the latest data from blockchain
+      refreshHistory()
+
       setState(prev => ({
         ...prev,
         status: 'completed',
@@ -194,7 +251,7 @@ export function useVerification(): UseVerificationReturn {
       }))
       toast.success('Verification completed!')
     }
-  }, [isConfirmed, state.status])
+  }, [isConfirmed, state.status, hash, refreshHistory, completeVerification])
 
   // Handle transaction errors
   useEffect(() => {
