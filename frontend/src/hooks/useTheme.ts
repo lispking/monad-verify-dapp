@@ -4,26 +4,31 @@ import type { Theme } from '../types/index'
 const THEME_KEY = 'monad-verify-theme'
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
-  const [isInitialized, setIsInitialized] = useState(false)
+  // Initialize theme from localStorage immediately
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system'
 
-  // Initialize theme from localStorage on mount
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+    const stored = localStorage.getItem(THEME_KEY) as Theme
+    return (stored && ['light', 'dark', 'system'].includes(stored)) ? stored : 'system'
+  })
+
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light'
 
     const stored = localStorage.getItem(THEME_KEY) as Theme
     const initialTheme = (stored && ['light', 'dark', 'system'].includes(stored)) ? stored : 'system'
 
-    setTheme(initialTheme)
-
-    // Set initial resolved theme
     if (initialTheme === 'system') {
-      setResolvedTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
     } else {
-      setResolvedTheme(initialTheme as 'light' | 'dark')
+      return initialTheme as 'light' | 'dark'
     }
+  })
 
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // Mark as initialized on mount
+  useEffect(() => {
     setIsInitialized(true)
   }, [])
 
