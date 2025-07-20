@@ -4,8 +4,11 @@ import "@nomicfoundation/hardhat-verify";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import * as dotenv from "dotenv";
+import { resolve } from "path";
 
-dotenv.config({ path: "../.env" });
+dotenv.config({ path: resolve(__dirname, './.env') });
+
+const { PRIVATE_KEY } = process.env;
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -24,13 +27,13 @@ const config: HardhatUserConfig = {
     },
     monadTestnet: {
       url: process.env.MONAD_TESTNET_RPC || "https://testnet-rpc.monad.xyz",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: [`${PRIVATE_KEY}`],
       chainId: 10143,
       gasPrice: "auto",
     },
     monadMainnet: {
       url: process.env.MONAD_MAINNET_RPC || "https://rpc.monad.xyz",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: [`${PRIVATE_KEY}`],
       chainId: 143,
       gasPrice: "auto",
     },
