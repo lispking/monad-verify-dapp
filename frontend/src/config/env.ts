@@ -1,10 +1,5 @@
 // Environment configuration
 export const env = {
-  // Primus Configuration
-  PRIMUS_APP_ID: import.meta.env.VITE_PRIMUS_APP_ID || '',
-  PRIMUS_APP_SECRET: import.meta.env.VITE_PRIMUS_APP_SECRET || '',
-  PRIMUS_TEMPLATE_ID: import.meta.env.VITE_PRIMUS_TEMPLATE_ID || '',
-
   // Network Configuration
   MONAD_TESTNET_RPC: import.meta.env.VITE_MONAD_TESTNET_RPC || 'https://testnet-rpc.monad.xyz',
   MONAD_MAINNET_RPC: import.meta.env.VITE_MONAD_MAINNET_RPC || 'https://rpc.monad.xyz',
@@ -24,23 +19,6 @@ export const env = {
   // WalletConnect
   WALLETCONNECT_PROJECT_ID: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '',
 } as const
-
-// Validation
-export function validateEnv() {
-  const required = [
-    'PRIMUS_APP_ID',
-    'PRIMUS_TEMPLATE_ID',
-  ] as const
-
-  const missing = required.filter(key => !env[key])
-  
-  if (missing.length > 0) {
-    console.warn('Missing environment variables:', missing)
-    if (env.ENVIRONMENT === 'production') {
-      throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
-    }
-  }
-}
 
 // Helper functions
 export function getContractAddress(contractName: 'primus' | 'monadVerify', chainId: number) {
@@ -62,9 +40,4 @@ export function isTestnet(chainId: number) {
 
 export function isMainnet(chainId: number) {
   return chainId === env.MONAD_MAINNET_CHAIN_ID
-}
-
-// Initialize validation
-if (typeof window !== 'undefined') {
-  validateEnv()
 }

@@ -61,8 +61,8 @@ export const wagmiConfig = createConfig({
       metadata: {
         name: 'MonadVerify',
         description: 'Secure data verification on Monad blockchain',
-        url: 'https://monadverify.xyz',
-        icons: ['https://monadverify.xyz/logo.png'],
+        url: 'https://monad-verify.vercel.app',
+        icons: ['https://monad-verify.vercel.app/logo.png'],
       },
     }),
   ],

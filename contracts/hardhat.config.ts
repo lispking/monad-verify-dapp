@@ -35,30 +35,6 @@ const config: HardhatUserConfig = {
       gasPrice: "auto",
     },
   },
-  etherscan: {
-    apiKey: {
-      monadTestnet: process.env.MONAD_ETHERSCAN_API_KEY || "",
-      monadMainnet: process.env.MONAD_ETHERSCAN_API_KEY || "",
-    },
-    customChains: [
-      {
-        network: "monadTestnet",
-        chainId: 10143,
-        urls: {
-          apiURL: "https://testnet-explorer.monad.xyz/api",
-          browserURL: "https://testnet-explorer.monad.xyz",
-        },
-      },
-      {
-        network: "monadMainnet",
-        chainId: 143,
-        urls: {
-          apiURL: "https://explorer.monad.xyz/api",
-          browserURL: "https://explorer.monad.xyz",
-        },
-      },
-    ],
-  },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",

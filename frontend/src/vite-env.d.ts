@@ -1,9 +1,6 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_PRIMUS_APP_ID: string
-  readonly VITE_PRIMUS_APP_SECRET: string
-  readonly VITE_PRIMUS_TEMPLATE_ID: string
   readonly VITE_MONAD_TESTNET_RPC: string
   readonly VITE_MONAD_MAINNET_RPC: string
   readonly VITE_MONAD_TESTNET_CHAIN_ID: string

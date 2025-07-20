@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://monadverify.xyz/sitemap.xml
+Sitemap: https://monad-verify.vercel.app/sitemap.xml
 
 # Crawl-delay
 Crawl-delay: 1
