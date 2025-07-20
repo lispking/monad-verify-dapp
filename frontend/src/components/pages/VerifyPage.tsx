@@ -7,7 +7,6 @@ import {
   CreditCardIcon,
   UserIcon,
   AcademicCapIcon,
-  BriefcaseIcon,
   GlobeAltIcon,
   CheckCircleIcon,
   ClockIcon,
@@ -84,7 +83,7 @@ const dataTypes = [
 ]
 
 export default function VerifyPage() {
-  const { address, isConnected } = useAccount()
+  const { isConnected } = useAccount()
   const [selectedDataType, setSelectedDataType] = useState<DataType | null>(null)
   const { state, requestVerification, reset } = useVerification()
 
@@ -217,7 +216,7 @@ export default function VerifyPage() {
               </p>
 
               {/* Progress Bar */}
-              {state.status !== 'completed' && state.status !== 'failed' && state.status !== 'idle' && (
+              {(state.status === 'requesting' || state.status === 'pending' || state.status === 'verifying') && (
                 <div className="mb-6">
                   <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
                     <span>Progress</span>

@@ -1,12 +1,13 @@
 import { Fragment, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { XMarkIcon, WalletIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, WalletIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { useConnect, useAccount } from 'wagmi'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 
 // Utils
 import { isSupportedChain } from '../config/wagmi'
+import { useNetworkSwitch } from '../hooks/useNetworkSwitch'
 
 interface ConnectWalletProps {
   className?: string
@@ -16,7 +17,8 @@ interface ConnectWalletProps {
 export default function ConnectWallet({ className, size = 'md' }: ConnectWalletProps) {
   const [isOpen, setIsOpen] = useState(false)
   const { connect, connectors, isPending } = useConnect()
-  const { isConnected, chainId } = useAccount()
+  const { isConnected, chain } = useAccount()
+  const { switchToMonadTestnet, isSwitching } = useNetworkSwitch()
 
   const sizeClasses = {
     sm: 'px-3 py-1.5 text-sm',
@@ -36,10 +38,11 @@ export default function ConnectWallet({ className, size = 'md' }: ConnectWalletP
   }
 
   // Show network warning if connected to unsupported chain
-  if (isConnected && chainId && !isSupportedChain(chainId)) {
+  if (isConnected && chain && !isSupportedChain(chain.id)) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={switchToMonadTestnet}
+        disabled={isSwitching}
         className={clsx(
           'btn btn-secondary border-yellow-300 bg-yellow-50 text-yellow-800 hover:bg-yellow-100',
           'dark:border-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-300 dark:hover:bg-yellow-900/30',
@@ -48,7 +51,7 @@ export default function ConnectWallet({ className, size = 'md' }: ConnectWalletP
         )}
       >
         <WalletIcon className="mr-2 h-4 w-4" />
-        Wrong Network
+        {isSwitching ? 'Switching...' : 'Switch to Monad'}
       </button>
     )
   }
@@ -156,17 +159,27 @@ export default function ConnectWallet({ className, size = 'md' }: ConnectWalletP
                     </p>
                   </div>
 
-                  {chainId && !isSupportedChain(chainId) && (
+                  {chain && !isSupportedChain(chain.id) && (
                     <div className="mt-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 p-4">
                       <div className="flex">
-                        <div className="ml-3">
+                        <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+                        <div className="ml-3 flex-1">
                           <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
                             Unsupported Network
                           </h3>
                           <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
                             <p>
-                              Please switch to Monad Testnet or Mainnet to use this application.
+                              Please switch to Monad Testnet to use this application.
                             </p>
+                          </div>
+                          <div className="mt-3">
+                            <button
+                              onClick={switchToMonadTestnet}
+                              disabled={isSwitching}
+                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-yellow-800 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-100 dark:hover:bg-yellow-700 disabled:opacity-50"
+                            >
+                              {isSwitching ? 'Switching...' : 'Switch to Monad Testnet'}
+                            </button>
                           </div>
                         </div>
                       </div>

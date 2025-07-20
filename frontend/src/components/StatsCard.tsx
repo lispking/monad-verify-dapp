@@ -1,5 +1,4 @@
 import { clsx } from 'clsx'
-import type { LucideIcon } from 'lucide-react'
 
 interface StatsCardProps {
   name: string

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt, useChainId, useAccount } from 'wagmi'
 import { parseEther, encodePacked, keccak256 } from 'viem'
 import toast from 'react-hot-toast'

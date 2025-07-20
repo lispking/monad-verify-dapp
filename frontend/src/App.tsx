@@ -3,6 +3,9 @@ import { useAccount } from 'wagmi'
 
 // Components
 import Layout from './components/Layout'
+
+// Hooks
+import { useNetworkSwitch } from './hooks/useNetworkSwitch'
 import HomePage from './components/pages/HomePage'
 import DashboardPage from './components/pages/DashboardPage'
 import VerifyPage from './components/pages/VerifyPage'
@@ -12,6 +15,9 @@ import NotFoundPage from './components/pages/NotFoundPage'
 
 function App() {
   const { isConnected } = useAccount()
+
+  // Auto-switch to Monad Testnet when wallet connects
+  useNetworkSwitch()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">

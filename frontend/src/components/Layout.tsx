@@ -9,6 +9,7 @@ import { clsx } from 'clsx'
 import ConnectWallet from './ConnectWallet'
 import ThemeToggle from './ThemeToggle'
 import Logo from './Logo'
+import { NetworkStatusBadge } from './NetworkIndicator'
 
 // Types
 import type { NavItem } from '../types/index'
@@ -63,8 +64,9 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
                 
                 <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
+                  <NetworkStatusBadge />
                   <ThemeToggle />
-                  
+
                   {isConnected ? (
                     <Menu as="div" className="relative ml-3">
                       <div>
@@ -174,9 +176,12 @@ export default function Layout({ children }: LayoutProps) {
                       <div className="flex-shrink-0">
                         <UserCircleIcon className="h-8 w-8 text-slate-400" />
                       </div>
-                      <div className="ml-3">
+                      <div className="ml-3 flex-1">
                         <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
                           {formatAddress(address!)}
+                        </div>
+                        <div className="mt-1">
+                          <NetworkStatusBadge />
                         </div>
                       </div>
                     </div>
