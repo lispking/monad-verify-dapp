@@ -1,0 +1,23 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="appleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d946ef;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded rectangle background -->
+  <rect width="180" height="180" rx="40" fill="url(#appleGradient)"/>
+  
+  <!-- Shield -->
+  <path d="M90 30L45 50V90C45 123.75 68.4 153.5 90 165C111.6 153.5 135 123.75 135 90V50L90 30Z" 
+        fill="white" 
+        fill-opacity="0.95"/>
+  
+  <!-- Checkmark -->
+  <path d="M75 90L85 100L105 75" 
+        stroke="url(#appleGradient)" 
+        stroke-width="8" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+</svg>

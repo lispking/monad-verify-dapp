@@ -249,9 +249,7 @@ export default function HomePage() {
                   Start Verification
                 </Link>
               ) : (
-                <div className="rounded-md bg-white px-3.5 py-2.5">
-                  <ConnectWallet className="!bg-transparent !text-primary-600 !shadow-none hover:!bg-primary-50" />
-                </div>
+                <ConnectWallet className="!bg-white !text-primary-600 !shadow-sm hover:!bg-primary-50 !border-0 !px-3.5 !py-2.5 !rounded-md !from-white !to-white hover:!from-primary-50 hover:!to-primary-50" />
               )}
               <Link
                 to="/about"

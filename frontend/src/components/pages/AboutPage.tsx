@@ -320,7 +320,7 @@ export default function AboutPage() {
             </a>
 
             <a
-              href="https://github.com/monad-verify"
+              href="https://github.com/lispking/monad-verify-dapp"
               target="_blank"
               rel="noopener noreferrer"
               className="block p-6 bg-slate-50 dark:bg-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"

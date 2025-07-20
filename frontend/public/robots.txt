@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://monadverify.xyz/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
+
+# Disallow sensitive paths (if any)
+# Disallow: /admin/
+# Disallow: /api/
+
+# Allow important pages
+Allow: /
+Allow: /about
+Allow: /verify
+Allow: /dashboard
+Allow: /profile

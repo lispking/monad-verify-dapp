@@ -1,0 +1,19 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d946ef;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Shield background -->
+  <path d="M8 1L2 4V8C2 11.0333 4.56 13.8267 8 14.6667C11.44 13.8267 14 11.0333 14 8V4L8 1Z" 
+        fill="url(#faviconGradient)"/>
+  
+  <!-- Checkmark -->
+  <path d="M6 8L7.5 9.5L10 6.5" 
+        stroke="white" 
+        stroke-width="1.2" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+</svg>

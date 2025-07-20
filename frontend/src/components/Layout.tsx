@@ -237,7 +237,7 @@ export default function Layout({ children }: LayoutProps) {
                 Monad Docs
               </a>
               <a
-                href="https://github.com/monad-verify"
+                href="https://github.com/lispking/monad-verify-dapp"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
