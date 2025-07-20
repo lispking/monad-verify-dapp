@@ -6,7 +6,7 @@ import { useAccount, useDisconnect } from 'wagmi'
 import { clsx } from 'clsx'
 
 // Components
-import ConnectWallet from './ConnectWallet'
+import { SimpleConnectButton } from './RainbowConnectButton'
 import ThemeToggle from './ThemeToggle'
 import Logo from './Logo'
 import { NetworkStatusBadge } from './NetworkIndicator'
@@ -133,7 +133,7 @@ export default function Layout({ children }: LayoutProps) {
                       </Transition>
                     </Menu>
                   ) : (
-                    <ConnectWallet />
+                    <SimpleConnectButton />
                   )}
                 </div>
                 
@@ -202,7 +202,7 @@ export default function Layout({ children }: LayoutProps) {
                   </div>
                 ) : (
                   <div className="px-4">
-                    <ConnectWallet />
+                    <SimpleConnectButton />
                   </div>
                 )}
               </div>

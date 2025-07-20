@@ -11,7 +11,7 @@ import {
 import { motion } from 'framer-motion'
 
 // Components
-import ConnectWallet from '../ConnectWallet'
+import { RainbowConnectButton } from '../RainbowConnectButton'
 
 const features = [
   {
@@ -91,7 +91,7 @@ export default function HomePage() {
                   <ArrowRightIcon className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               ) : (
-                <ConnectWallet size="lg" />
+                <RainbowConnectButton />
               )}
               <Link
                 to="/about"
@@ -249,7 +249,7 @@ export default function HomePage() {
                   Start Verification
                 </Link>
               ) : (
-                <ConnectWallet className="!bg-white !text-primary-600 !shadow-sm hover:!bg-primary-50 !border-0 !px-3.5 !py-2.5 !rounded-md !from-white !to-white hover:!from-primary-50 hover:!to-primary-50" />
+                <RainbowConnectButton />
               )}
               <Link
                 to="/about"

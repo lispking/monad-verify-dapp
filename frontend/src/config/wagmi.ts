@@ -1,6 +1,6 @@
-import { createConfig, http } from 'wagmi'
+import { http } from 'wagmi'
 import { hardhat } from 'wagmi/chains'
-import { injected, metaMask, walletConnect } from 'wagmi/connectors'
+import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 
 // Define Monad chains
 export const monadTestnet = {
@@ -50,22 +50,11 @@ export const monadMainnet = {
 // Get project ID for WalletConnect
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id'
 
-// Create wagmi config
-export const wagmiConfig = createConfig({
+// Create wagmi config with RainbowKit
+export const wagmiConfig = getDefaultConfig({
+  appName: 'MonadVerify',
+  projectId,
   chains: [monadTestnet, monadMainnet, hardhat],
-  connectors: [
-    injected(),
-    metaMask(),
-    walletConnect({
-      projectId,
-      metadata: {
-        name: 'MonadVerify',
-        description: 'Secure data verification on Monad blockchain',
-        url: 'https://monad-verify.vercel.app',
-        icons: ['https://monad-verify.vercel.app/logo.png'],
-      },
-    }),
-  ],
   transports: {
     [monadTestnet.id]: http(monadTestnet.rpcUrls.default.http[0]),
     [monadMainnet.id]: http(monadMainnet.rpcUrls.default.http[0]),
