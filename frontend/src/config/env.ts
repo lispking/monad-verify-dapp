@@ -18,6 +18,9 @@ export const env = {
 
   // WalletConnect
   WALLETCONNECT_PROJECT_ID: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '',
+
+  // Mock API
+  MOCK_API_URL: import.meta.env.VITE_MOCK_API_URL || '',
 } as const
 
 // Helper functions

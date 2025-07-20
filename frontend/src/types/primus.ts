@@ -1,6 +1,8 @@
 // Primus zkTLS Types
 // Based on @primuslabs/zktls-contracts/src/IPrimusZKTLS.sol
 
+import { env } from '../config/env'
+
 export interface AttNetworkRequest {
   url: string
   header: string
@@ -40,7 +42,7 @@ export function createMockAttestation(
   return {
     recipient: recipient as `0x${string}`,
     request: {
-      url: 'https://api.example.com/verify',
+      url: `${env.MOCK_API_URL}/api/verify`,
       header: '{"Content-Type": "application/json"}',
       method: 'POST',
       body: `{"type": "${dataType}", "data": "${data}"}`,
@@ -58,8 +60,8 @@ export function createMockAttestation(
     additionParams: '',
     attestors: [
       {
-        attestorAddr: '0x1234567890123456789012345678901234567890' as `0x${string}`,
-        url: 'https://attestor.example.com',
+        attestorAddr: '0x1Ad7fD53206fDc3979C672C0466A1c48AF47B431' as `0x${string}`, // Real Primus Verifier address
+        url: `${env.MOCK_API_URL}/api/health`,
       },
     ],
     signatures: [('0x' + '0'.repeat(130)) as `0x${string}`], // Mock signature
